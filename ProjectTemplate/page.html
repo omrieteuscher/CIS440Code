@@ -1,0 +1,239 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <!--DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY!!!!!-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+   
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Georgia, sans-serif;
+        }
+        body {
+            background-color: #F6F3EE;
+            margin: 0;
+        }
+        body h2 {
+            padding-bottom: 8px;
+            color: #4E3829;            
+        }
+
+        .requestDiv, .feedbackDiv {
+            box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+            border-radius: 15px;
+            background-color: white;
+            padding: 2%;
+            margin-bottom: 2%;
+            background-color: #E8DED4;
+            border: none;
+            outline: none;
+            border: 1px solid #544541;
+            color: #4E3829;
+        }
+        .requestDiv {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #requestBtn, #unansweredReq, #answeredReq {
+            border: none;
+            outline: none;
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+            font-size: 16px;
+            font-weight: 600;
+            color: #1D1912;
+            cursor: pointer;
+        }
+
+        #requestBtn:hover, #requestBtn:active,
+        #unansweredReq:hover, #unansweredReq:active,
+        #answeredReq:hover, #answeredReq:active {
+            background-color: transparent;
+        }
+        header {
+            padding-right: 2px;
+            display: block;
+        }
+        select {
+            background: transparent;
+            border: none;
+            outline: none;
+            border: 2px solid #282218;
+            border-radius: 40px;
+            font-size: 16px;
+        }
+        select:hover, select:active {
+            border:2px solid #74625d;
+            color: #74625d;
+            cursor: pointer;
+
+        }
+        #people {
+            width: 25%;
+            margin-right: 1%;
+        }
+        #formPerson {
+            width: 100%;
+        }
+        #time {
+            width: 25%;
+            margin-right: 1%;
+        }
+        #request {
+            width: 25%;
+            margin-right: 3%;
+        }
+        #formRequest {
+            width: 100%;
+            height: 150px;
+            background: transparent;
+            border: none;
+            outline: none;
+            border-radius: 1px;
+            border: 1px solid #282218;
+            font-size: 16px;
+            padding: 10px;
+
+        }
+
+        :root {
+            --modal-duration: 1s;
+        }
+
+        .modalContainer {
+            background-color: rgba(0, 0, 0, .6);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+        }
+
+        .modal {
+            background-color: #E8DED4;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            position: absolute;
+            overflow: hidden;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 100%;
+            width: 400px;
+        }
+        .modalContent {
+            padding: 20px;
+        }
+        .modalForm div {
+            margin: 20px 0;
+        }
+        .modalForm label {
+            display: block;
+            margin-bottom: 6px;
+            color: #4E3829;
+        }
+        h1 {
+            color: #4E3829;
+            text-align: center;
+        }
+
+        .closeBtn {
+            background: transparent;
+            border: none;
+            font-size: 25px;
+            position: absolute;
+            top: 5px;
+            right: 12px;
+            cursor: pointer;
+            color: #282218;
+        }
+        .closeBtn:hover {
+            color: #A9754B;
+        }
+        .modalContainer .submitBtn {
+            padding: 10px 30px;
+            font-size: 16px;
+            background-color: #FAF9F7;
+            color: #1D1912;
+            cursor: pointer;
+        }
+
+        .modalContainer.showModal {
+            display: block;
+
+        }
+
+    </style>
+
+    <body>
+        <h2>Request Feedback</h2>
+        
+        <div class="requestDiv">
+            <header>Person</header>
+            <select id="people">
+                <option value=""></option>
+            </select>
+            <header>Time Period</header>
+            <select id="time">
+                <option value=""></option>
+            </select>
+            <header>Feedback Requests</header>
+            <select id="request">
+                <option value=""></option>
+            </select>
+            <button id="requestBtn">Request Feedback</button>
+        </div>
+        <div class="feedbackDiv">
+            <button id="unansweredReq">Unanswered Requests</button>
+            <button id="answeredReq">Answered Requests</button>
+        </div>
+
+
+
+        <section class="modalContainer" id="modal">
+            <section class="modal">
+                <button class="closeBtn" id="close">x</button>
+                <div class="modalContent">
+                    <h1>Request Feedback</h1>
+                    <form class="modalForm">
+                        <div>
+                            <label for="formPerson">Person</label>
+                            <select id="formPerson"></select>
+                        </div>
+                        <div>
+                            <label for="formRequest">Feedback Request</label>
+                            <textarea  id="formRequest" placeholder="I would like feedback on..."></textarea>
+                        </div>
+                        <input type="submit" value="Submit" class="submitBtn">
+                    </form>
+                </div>
+            </section>  
+        </section>
+
+        <script>
+            const cancel = document.getElementById("close");
+            const request = document.getElementById("requestBtn");
+            const modal = document.getElementById("modal");
+    
+            console.log(cancel);
+            console.log(request);
+            console.log(modal);
+    
+            request.addEventListener('click', () => modal.classList.add("showModal"));
+            cancel.addEventListener('click', () => modal.classList.remove('showModal'));
+
+            window.addEventListener('click', e => {
+                e.target === modal ? modal.classList.remove('showModal') : false
+            });
+    
+        </script>
+    </body>
+</html>
