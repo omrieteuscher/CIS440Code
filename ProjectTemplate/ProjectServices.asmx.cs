@@ -19,9 +19,9 @@ namespace ProjectTemplate
 		////////////////////////////////////////////////////////////////////////
 		///replace the values of these variables with your database credentials
 		////////////////////////////////////////////////////////////////////////
-		private string dbID = "cis440template";
-		private string dbPass = "!!Cis440";
-		private string dbName = "cis440template";
+		private string dbID = "cis440springA2025team1";
+		private string dbPass = "cis440springA2025team1";
+		private string dbName = "cis440springA2025team1";
 		////////////////////////////////////////////////////////////////////////
 		
 		////////////////////////////////////////////////////////////////////////
@@ -43,7 +43,7 @@ namespace ProjectTemplate
 		{
 			try
 			{
-				string testQuery = "select * from test";
+				string testQuery = "select * from users";
 
 				////////////////////////////////////////////////////////////////////////
 				///here's an example of using the getConString method!
@@ -62,5 +62,95 @@ namespace ProjectTemplate
 				return "Something went wrong, please check your credentials and db name and try again.  Error: "+e.Message;
 			}
 		}
-	}
+
+        [WebMethod(EnableSession = true)]
+        public string CreateAccount(string email, string password, string firstName, string lastName)
+        {
+            string sqlConnectString = getConString();
+
+            // Normalize email to lowercase for case-insensitive handling
+            string normalizedEmail = email.ToLower();
+
+            // Check if email already exists
+            string checkEmailQuery = "SELECT COUNT(*) FROM users WHERE LOWER(email) = @Email";
+
+            string insertQuery = "INSERT INTO users (email, password, first_name, last_name, status, role) " +
+                                 "VALUES (@Email, @Password, @FirstName, @LastName, 1, 1); SELECT LAST_INSERT_ID();";
+
+            using (MySqlConnection sqlConnection = new MySqlConnection(sqlConnectString))
+            {
+                sqlConnection.Open();
+
+                using (MySqlCommand checkCommand = new MySqlCommand(checkEmailQuery, sqlConnection))
+                {
+                    checkCommand.Parameters.AddWithValue("@Email", normalizedEmail);
+                    int existingCount = Convert.ToInt32(checkCommand.ExecuteScalar());
+
+                    if (existingCount > 0)
+                    {
+                        return "Error: Email already registered.";
+                    }
+                }
+
+                using (MySqlCommand insertCommand = new MySqlCommand(insertQuery, sqlConnection))
+                {
+                    insertCommand.Parameters.AddWithValue("@Email", normalizedEmail);
+                    insertCommand.Parameters.AddWithValue("@Password", HttpUtility.UrlDecode(password));
+                    insertCommand.Parameters.AddWithValue("@FirstName", HttpUtility.UrlDecode(firstName));
+                    insertCommand.Parameters.AddWithValue("@LastName", HttpUtility.UrlDecode(lastName));
+
+                    try
+                    {
+                        int newUserId = Convert.ToInt32(insertCommand.ExecuteScalar());
+                        return "Success! Your new account has been created.";
+                    }
+                    catch (Exception ex)
+                    {
+                        return "Error: " + ex.Message;
+                    }
+                }
+            }
+        }
+
+        [WebMethod(EnableSession = true)]
+        public string Login(string email, string password)
+        {
+            string sqlConnectString = getConString();
+
+            // Normalize email to lowercase for case-insensitive handling
+            string normalizedEmail = email.ToLower();
+
+            // SQL query to check for a matching user
+            string sqlSelect = "SELECT user_id, role FROM users WHERE LOWER(email) = @Email AND password = @Password";
+
+            using (MySqlConnection sqlConnection = new MySqlConnection(sqlConnectString))
+            {
+                sqlConnection.Open();
+
+                using (MySqlCommand sqlCommand = new MySqlCommand(sqlSelect, sqlConnection))
+                {
+                    sqlCommand.Parameters.AddWithValue("@Email", normalizedEmail);
+                    sqlCommand.Parameters.AddWithValue("@Password", password);
+
+                    MySqlDataAdapter sqlDa = new MySqlDataAdapter(sqlCommand);
+                    DataTable sqlDt = new DataTable();
+                    sqlDa.Fill(sqlDt);
+
+                    if (sqlDt.Rows.Count > 0)
+                    {
+                        // Store user ID and role in session
+                        Session["user_id"] = sqlDt.Rows[0]["user_id"];
+                        Session["role"] = sqlDt.Rows[0]["role"];
+
+                        return "Login successful";
+                    }
+                    else
+                    {
+                        return "Invalid email or password. Please try again.";
+                    }
+                }
+            }
+        }
+
+    }
 }
