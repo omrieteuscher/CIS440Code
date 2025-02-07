@@ -112,5 +112,45 @@ namespace ProjectTemplate
             }
         }
 
+        [WebMethod(EnableSession = true)]
+        public string Login(string email, string password)
+        {
+            string sqlConnectString = getConString();
+
+            // Normalize email to lowercase for case-insensitive handling
+            string normalizedEmail = email.ToLower();
+
+            // SQL query to check for a matching user
+            string sqlSelect = "SELECT user_id, role FROM users WHERE LOWER(email) = @Email AND password = @Password";
+
+            using (MySqlConnection sqlConnection = new MySqlConnection(sqlConnectString))
+            {
+                sqlConnection.Open();
+
+                using (MySqlCommand sqlCommand = new MySqlCommand(sqlSelect, sqlConnection))
+                {
+                    sqlCommand.Parameters.AddWithValue("@Email", normalizedEmail);
+                    sqlCommand.Parameters.AddWithValue("@Password", password);
+
+                    MySqlDataAdapter sqlDa = new MySqlDataAdapter(sqlCommand);
+                    DataTable sqlDt = new DataTable();
+                    sqlDa.Fill(sqlDt);
+
+                    if (sqlDt.Rows.Count > 0)
+                    {
+                        // Store user ID and role in session
+                        Session["user_id"] = sqlDt.Rows[0]["user_id"];
+                        Session["role"] = sqlDt.Rows[0]["role"];
+
+                        return "Login successful";
+                    }
+                    else
+                    {
+                        return "Invalid email or password. Please try again.";
+                    }
+                }
+            }
+        }
+
     }
 }
