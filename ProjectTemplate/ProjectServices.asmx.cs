@@ -152,5 +152,70 @@ namespace ProjectTemplate
             }
         }
 
+        [WebMethod(EnableSession = true)]
+        public string EditAccount(string newPassword, string newPreferredName)
+        {
+            // Ensure the user is logged in
+            if (Session["user_id"] == null)
+            {
+                return "Error: User not logged in.";
+            }
+
+            if (string.IsNullOrEmpty(newPassword) && string.IsNullOrEmpty(newPreferredName))
+            {
+                return "No changes detected. Please update at least one field.";
+            }
+
+            string sqlConnectString = getConString();
+            int userId = Convert.ToInt32(Session["user_id"]);
+
+            // Construct the SQL query dynamically based on provided fields
+            List<string> updates = new List<string>();
+            if (!string.IsNullOrEmpty(newPassword))
+            {
+                updates.Add("password = @NewPassword");
+            }
+            if (!string.IsNullOrEmpty(newPreferredName))
+            {
+                updates.Add("preferred_name = @NewPreferredName");
+            }
+
+            string sqlUpdate = "UPDATE users SET " + string.Join(", ", updates) + " WHERE user_id = @UserId";
+
+            using (MySqlConnection sqlConnection = new MySqlConnection(sqlConnectString))
+            {
+                sqlConnection.Open();
+                using (MySqlCommand sqlCommand = new MySqlCommand(sqlUpdate, sqlConnection))
+                {
+                    if (!string.IsNullOrEmpty(newPassword))
+                    {
+                        sqlCommand.Parameters.AddWithValue("@NewPassword", newPassword);
+                    }
+                    if (!string.IsNullOrEmpty(newPreferredName))
+                    {
+                        sqlCommand.Parameters.AddWithValue("@NewPreferredName", newPreferredName);
+                    }
+                    sqlCommand.Parameters.AddWithValue("@UserId", userId);
+
+                    try
+                    {
+                        int rowsAffected = sqlCommand.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return "Account updated successfully.";
+                        }
+                        else
+                        {
+                            return "Error: No changes made.";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return "Error: " + ex.Message;
+                    }
+                }
+            }
+        }
+
     }
 }
