@@ -2,18 +2,20 @@
 <html>
 <head>
 	<meta charset="utf-8" />
-	<title></title>
+	<title>Login</title>
 	<!--DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY!!!!!-->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-	<!--YOUR OWN JAVASCRIPT CAN GO RIGHT HERE-->
 	<script type="text/javascript">
+		function loginHandler(event) {
+			event.preventDefault(); // Prevent default form submission
 
-		function TestButtonHandler() {
-			var webMethod = "ProjectServices.asmx/TestConnection";
-			var parameters = "{}";
+			var email = $("#email").val();
+			var password = $("#password").val();
 
-			//jQuery ajax method
+			var webMethod = "ProjectServices.asmx/Login";
+			var parameters = JSON.stringify({ email: email, password: password });
+
 			$.ajax({
 				type: "POST",
 				url: webMethod,
@@ -23,27 +25,26 @@
 				success: function (msg) {
 					var responseFromServer = msg.d;
 					alert(responseFromServer);
+
+					if (responseFromServer.includes("successful")) {
+						window.location.href = "page.html"; // Redirect if login is successful
+					}
 				},
 				error: function (e) {
-					alert("this code will only execute if javascript is unable to access the webservice");
+					alert("Error: Unable to connect to the server.");
 				}
-
 			});
-
-	
 		}
-
 	</script>
-	<!--END OF YOUR OWN JAVASCRIPT-->
 
-	<!--AND YOUR OWN CSS CAN GO HERE AS WELL-->
 	<style>
-        * {
+		* {
 			margin: 0;
 			padding: 0;
 			box-sizing: border-box;
 			font-family: Georgia, sans-serif;
-        }
+		}
+
 		body {
 			display: flex;
 			justify-content: center;
@@ -51,6 +52,7 @@
 			min-height: 100vh;
 			background-color: #F6F3EE;
 		}
+
 		.wrapper {
 			width: 420px;
 			background: #E8DED4;
@@ -58,45 +60,50 @@
 			border-radius: 10px;
 			padding: 30px 40px;
 		}
-		.wrapper h1 {
-			font-size: 36px;
-			text-align: center;
-		}
-		.wrapper .inputBox {
+
+			.wrapper h1 {
+				font-size: 36px;
+				text-align: center;
+			}
+
+			.wrapper .inputBox {
+				width: 100%;
+				height: 100%;
+				margin: 30px 0;
+			}
+
+		.inputBox input {
 			width: 100%;
 			height: 100%;
-			margin: 30px 0;
-		}
-
-        .inputBox input {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: none;
-            outline: none;
-            border: 2px solid #544541;
+			background: transparent;
+			border: none;
+			outline: none;
+			border: 2px solid #544541;
 			border-radius: 40px;
 			font-size: 16px;
 			padding: 20px 45px 20px 20px;
-        }
-        .inputBox input::placeholder {
-            color: #544541;
-        }
+		}
 
-        .forgotPass {
-            display: flex;
-            font-size: 14.5px;
-            margin: -15px 0 15px;
-            display: block;
-            text-align: right;
-        }
-        .forgotPass a {
-            color: #4E3829;
-            text-decoration: none;
-        }
-        .forgotPass a:hover {
-			text-decoration: underline;
-        }
+			.inputBox input::placeholder {
+				color: #544541;
+			}
+
+		.forgotPass {
+			display: flex;
+			font-size: 14.5px;
+			margin: -15px 0 15px;
+			display: block;
+			text-align: right;
+		}
+
+			.forgotPass a {
+				color: #4E3829;
+				text-decoration: none;
+			}
+
+				.forgotPass a:hover {
+					text-decoration: underline;
+				}
 
 		.wrapper .btn {
 			width: 100%;
@@ -108,44 +115,41 @@
 			font-size: 16px;
 			font-weight: 600;
 		}
+
 		.wrapper .registerLink {
 			font-size: 14.5px;
 			text-align: center;
 			margin-top: 20px;
 		}
-        .registerLink p a {
-            color: #4E3829;
+
+		.registerLink p a {
+			color: #4E3829;
 			text-decoration: none;
 			font-weight: 600;
-        }
-        .registerLink p a:hover {
-			text-decoration: underline;
-        }
+		}
 
+			.registerLink p a:hover {
+				text-decoration: underline;
+			}
 	</style>
-	<!--END OF YOUR OWN CSS-->
-</head >
+</head>
+
 <body>
-    <div class="wrapper">
-		<form action="">
+	<div class="wrapper">
+		<form onsubmit="loginHandler(event)">
 			<h1>Login</h1>
 			<div class="inputBox">
-				<input type="text" placeholder="Username" required />
+				<input id="email" type="text" placeholder="Email" required />
 			</div>
 			<div class="inputBox">
-				<input type="password" placeholder="Password" required />
+				<input id="password" type="password" placeholder="Password" required />
 			</div>
 			<div class="forgotPass">
 				<a href="#">Forgot Password?</a>
 			</div>
-				<button onClick="onClickFn()" type="submit" class="btn">Login</button>
-            <div class="registerLink"><p>Don't have an account?<a href="#"> Register</a></p></div>
+			<button type="submit" class="btn">Login</button>
+			<div class="registerLink"><p>Don't have an account?<a href="#"> Register</a></p></div>
 		</form>
 	</div>
-    <script>
-		function onClickFn() {
-			document.location.href = "page.html";
-		}
-	</script>
 </body>
-</html >
+</html>
