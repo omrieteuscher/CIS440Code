@@ -217,5 +217,59 @@ namespace ProjectTemplate
             }
         }
 
+        [WebMethod(EnableSession = true)]
+        public string DeleteAccount(int userId)
+        {
+            // Ensure the user is logged in and has the right role
+            if (Session["role"] == null || Convert.ToInt32(Session["role"]) < 2)
+            {
+                return "Error: You do not have permission to delete this user.";
+            }
+
+            string sqlConnectString = getConString();
+
+            // Check if the user exists before attempting deletion
+            string checkUserQuery = "SELECT COUNT(*) FROM users WHERE user_id = @UserId";
+            string deleteUserQuery = "DELETE FROM users WHERE user_id = @UserId";
+
+            using (MySqlConnection sqlConnection = new MySqlConnection(sqlConnectString))
+            {
+                sqlConnection.Open();
+
+                using (MySqlCommand checkCommand = new MySqlCommand(checkUserQuery, sqlConnection))
+                {
+                    checkCommand.Parameters.AddWithValue("@UserId", userId);
+                    int userCount = Convert.ToInt32(checkCommand.ExecuteScalar());
+
+                    if (userCount == 0)
+                    {
+                        return "Error: User does not exist.";
+                    }
+                }
+
+                using (MySqlCommand deleteCommand = new MySqlCommand(deleteUserQuery, sqlConnection))
+                {
+                    deleteCommand.Parameters.AddWithValue("@UserId", userId);
+
+                    try
+                    {
+                        int rowsAffected = deleteCommand.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return "Account successfully deleted.";
+                        }
+                        else
+                        {
+                            return "Error: Deletion failed.";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return "Error: " + ex.Message;
+                    }
+                }
+            }
+        }
+
     }
 }
