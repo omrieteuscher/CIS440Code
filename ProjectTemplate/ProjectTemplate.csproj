@@ -187,8 +187,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Front_End\createaccount.html" />
+    <Content Include="Front_End\dashboard.html" />
+    <Content Include="Front_End\homepage.html" />
+    <Content Include="Front_End\login.html" />
     <Content Include="Global.asax" />
-    <Content Include="index.html" />
     <Content Include="ProjectServices.asmx" />
     <Content Include="Web.config" />
   </ItemGroup>

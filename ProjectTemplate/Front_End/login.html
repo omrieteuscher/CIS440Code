@@ -4,6 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <script type="text/javascript">
+    function Login(event) {
+	    event.preventDefault(); // Prevent default form submission
+
+	    var email = $("#email").val();
+	    var password = $("#password").val();
+
+	    var webMethod = "ProjectServices.asmx/Login";
+	    var parameters = JSON.stringify({ email: email, password: password });
+
+	    $.ajax({
+		    type: "POST",
+		    url: webMethod,
+		    data: parameters,
+		    contentType: "application/json; charset=utf-8",
+		    dataType: "json",
+		    success: function (msg) {
+			    var responseFromServer = msg.d;
+			    alert(responseFromServer);
+
+			    if (responseFromServer.includes("successful")) {
+				    window.location.href = "page.html"; // Redirect if login is successful
+			    }
+		    },
+		    error: function (e) {
+			    alert("Error: Unable to connect to the server.");
+		    }
+	    });
+}
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Futura:wght@400&display=swap');
 
@@ -39,10 +71,10 @@
             left: 0;
         }
 
-        .banner h1 {
-            font-size: 24px;
-            font-weight: bold;
-        }
+            .banner h1 {
+                font-size: 24px;
+                font-weight: bold;
+            }
 
         /* Login Container */
         .container {
@@ -76,9 +108,9 @@
             margin-top: 10px;
         }
 
-        .login-btn:hover, .create-btn:hover {
-            background-color: #5a2468;
-        }
+            .login-btn:hover, .create-btn:hover {
+                background-color: #5a2468;
+            }
 
         .back-btn {
             display: block;
@@ -88,9 +120,9 @@
             font-size: 14px;
         }
 
-        .back-btn:hover {
-            text-decoration: underline;
-        }
+            .back-btn:hover {
+                text-decoration: underline;
+            }
 
         /* Already have an account section */
         .already-account-text {
