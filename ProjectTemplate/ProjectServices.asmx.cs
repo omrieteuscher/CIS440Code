@@ -271,5 +271,65 @@ namespace ProjectTemplate
             }
         }
 
+        [WebMethod(EnableSession = true)]
+        public string RequestFeedback(string receiverEmail, string requestText)
+        {
+            // Ensure user is logged in
+            if (Session["user_id"] == null)
+            {
+                return "Error: User not logged in.";
+            }
+
+            string sqlConnectString = getConString();
+            int senderId = Convert.ToInt32(Session["user_id"]); // Get sender ID from session
+            int receiverId;
+
+            // SQL query to find receiver's user_id based on email
+            string getReceiverQuery = "SELECT user_id FROM users WHERE email = @ReceiverEmail";
+
+            using (MySqlConnection sqlConnection = new MySqlConnection(sqlConnectString))
+            {
+                sqlConnection.Open();
+
+                using (MySqlCommand getReceiverCmd = new MySqlCommand(getReceiverQuery, sqlConnection))
+                {
+                    getReceiverCmd.Parameters.AddWithValue("@ReceiverEmail", receiverEmail);
+                    object result = getReceiverCmd.ExecuteScalar();
+
+                    if (result == null)
+                    {
+                        return "Error: Receiver email not found.";
+                    }
+
+                    receiverId = Convert.ToInt32(result);
+                }
+
+                // Set due date to 7 days from today
+                DateTime dueDate = DateTime.Now.AddDays(7);
+
+                // SQL query to insert feedback request
+                string insertFeedbackQuery = "INSERT INTO feedbackRequests (sender_id, receiver_id, request, due_date) " +
+                                             "VALUES (@SenderId, @ReceiverId, @RequestText, @DueDate)";
+
+                using (MySqlCommand insertCmd = new MySqlCommand(insertFeedbackQuery, sqlConnection))
+                {
+                    insertCmd.Parameters.AddWithValue("@SenderId", senderId);
+                    insertCmd.Parameters.AddWithValue("@ReceiverId", receiverId);
+                    insertCmd.Parameters.AddWithValue("@RequestText", requestText);
+                    insertCmd.Parameters.AddWithValue("@DueDate", dueDate.ToString("yyyy-MM-dd")); // Format for MySQL date
+
+                    try
+                    {
+                        insertCmd.ExecuteNonQuery();
+                        return "Success: Feedback request sent.";
+                    }
+                    catch (Exception ex)
+                    {
+                        return "Error: Unable to process your request at this time.";
+                    }
+                }
+            }
+        }
+
     }
 }
