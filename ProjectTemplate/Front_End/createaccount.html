@@ -6,7 +6,43 @@
     <title>Create Account</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-    
+
+    <script type="text/javascript">
+
+        function CreateAccount() {
+            var email = $("#email").val();
+            var password = $("#password").val();
+            var firstName = $("#firstName").val();
+            var lastName = $("#lastName").val();
+
+            var webMethod = "ProjectServices.asmx/CreateAccount";
+       
+            var parameters = JSON.stringify({ email: email, password: password, firstName: firstName, lastName: lastName });
+
+            $.ajax({
+                type: "POST",
+                url: webMethod,
+                data: parameters,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    var responseFromServer = msg.d;
+                    alert(responseFromServer);
+
+                    if (responseFromServer.includes("successful")) {
+                        window.location.href = "dashboard.html"; // Redirect if creation is successful
+                    }
+                    else {
+                        alert("Existing email used.");
+                    }
+                },
+                error: function (e) {
+                    alert("Error: Unable to connect to the server.");
+                }
+            });
+        }
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Futura:wght@400&display=swap');
 
@@ -114,11 +150,11 @@
     <div class="container">
         <h1>Create Account</h1>
         <form action="dashboard.html" method="post">
-            <input type="text" placeholder="First Name" required>
-            <input type="text" placeholder="Last Name" required>
-            <input type="email" placeholder="Email" required>
-            <input type="password" placeholder="Password" required>
-            <button type="submit" class="join-btn">Join Now</button>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <input type="text" id="firstName" placeholder="First Name" required>
+            <input type="text" id="lastName" placeholder="Last Name" required>
+            <button type="submit" class="join-btn" id="join-btn" onclick="javascript: CreateAccount();">Join Now</button>
         </form>
         <a href="homepage.html" class="back-btn">Back to Home</a>
 

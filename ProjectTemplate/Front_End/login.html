@@ -7,14 +7,14 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
     <script type="text/javascript">
-    function Login(event) {
-	    event.preventDefault(); // Prevent default form submission
 
+    function Login() {
 	    var email = $("#email").val();
 	    var password = $("#password").val();
+       
 
 	    var webMethod = "ProjectServices.asmx/Login";
-	    var parameters = JSON.stringify({ email: email, password: password });
+	    var parameters = "(\"email\":\"" + encodeURI(email) + "\", \"password\":\"" + encodeURI(password)+"\"} ";
 
 	    $.ajax({
 		    type: "POST",
@@ -24,14 +24,12 @@
 		    dataType: "json",
 		    success: function (msg) {
 			    var responseFromServer = msg.d;
-			    alert(responseFromServer);
-
-			    if (responseFromServer.includes("successful")) {
-				    window.location.href = "page.html"; // Redirect if login is successful
-			    }
-		    },
+                if (responseFromServer.includes("success")) {
+                    window.location.href = "dashboard.html"; // Redirect if login is successful
+                }
+		    }, 
 		    error: function (e) {
-			    alert("Error: Unable to connect to the server.");
+			    alert("Error: Incorrect email or password");
 		    }
 	    });
 }
@@ -142,10 +140,10 @@
     <!-- Login Form -->
     <div class="container">
         <h1>Login</h1>
-        <form action="dashboard.html" method="get">
-            <input type="email" placeholder="Email" required>
-            <input type="password" placeholder="Password" required>
-            <button type="submit" class="login-btn">Login</button>
+        <form method="get">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit" class="login-btn" id="login-btn" onclick="Login()">Login</button>
         </form>
         <a href="homepage.html" class="back-btn">Back to Home</a>
 
