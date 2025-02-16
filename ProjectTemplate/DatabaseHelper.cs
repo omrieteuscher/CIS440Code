@@ -24,14 +24,19 @@ public class DatabaseHelper
             try
             {
                 conn.Open();
-                Console.WriteLine("✅ Database connection successful!");
+                System.Diagnostics.Debug.WriteLine("✅ Database connection successful!");
+            }
+            catch (MySqlException ex)
+            {
+                System.Diagnostics.Debug.WriteLine("❌ MySQL Connection Error: " + ex.Message);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("❌ Error connecting to database: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("❌ General Connection Error: " + ex.Message);
             }
         }
     }
+
 
     // ➤ NEW METHOD: Test Login Function
     public void TestLogin(string email, string password)

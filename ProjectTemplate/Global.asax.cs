@@ -12,6 +12,17 @@ namespace ProjectTemplate
         protected void Application_Start()
         {
             GlobalConfiguration.Configure(WebApiConfig.Register);
+
+            // ✅ TEST DATABASE CONNECTION ON STARTUP
+            try
+            {
+                DatabaseHelper dbHelper = new DatabaseHelper();
+                dbHelper.TestConnection();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("❌ Database connection failed: " + ex.Message);
+            }
         }
     }
 }

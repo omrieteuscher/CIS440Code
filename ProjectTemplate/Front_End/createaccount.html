@@ -113,11 +113,11 @@
     <!-- Create Account Form -->
     <div class="container">
         <h1>Create Account</h1>
-        <form action="dashboard.html" method="post">
-            <input type="text" placeholder="First Name" required>
-            <input type="text" placeholder="Last Name" required>
-            <input type="email" placeholder="Email" required>
-            <input type="password" placeholder="Password" required>
+        <form id="registerForm">
+            <input type="text" id="firstName" placeholder="First Name" required>
+            <input type="text" id="lastName" placeholder="Last Name" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
             <button type="submit" class="join-btn">Join Now</button>
         </form>
         <a href="homepage.html" class="back-btn">Back to Home</a>
@@ -128,6 +128,46 @@
             <button class="login-btn">Login</button>
         </a>
     </div>
+    <script>
+        document.getElementById("registerForm").addEventListener("submit", function (event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Get input values
+            let firstName = document.getElementById("firstName").value;
+            let lastName = document.getElementById("lastName").value;
+            let email = document.getElementById("email").value;
+            let password = document.getElementById("password").value;
+
+            // Send data to the backend API
+            fetch("http://localhost:50287/api/test/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    FirstName: firstName,
+                    LastName: lastName,
+                    Email: email,
+                    Password: password
+                })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error("❌ Registration failed. Email may already exist.");
+                    }
+                })
+                .then(data => {
+                    alert("✅ " + data.message); // Show success message
+                    window.location.href = "login.html"; // Redirect to login page
+                })
+                .catch(error => {
+                    alert(error.message);
+                    console.error("Error:", error);
+                });
+        });
+    </script>
 
 </body>
 </html>

@@ -369,20 +369,86 @@
 
     <!-- Popup window controls-->
     <script>
-      const cancel = document.getElementById("close");
-      const request = document.getElementById("requestBtn");
-      const modal = document.getElementById("modal");
+        const cancel = document.getElementById("close");
+        const request = document.getElementById("requestBtn");
+        const modal = document.getElementById("modal");
 
-      console.log(cancel);
-      console.log(request);
-      console.log(modal);
+        console.log(cancel);
+        console.log(request);
+        console.log(modal);
 
-      request.addEventListener('click', () => modal.classList.add("showModal"));
-      cancel.addEventListener('click', () => modal.classList.remove('showModal'));
+        request.addEventListener('click', () => modal.classList.add("showModal"));
+        cancel.addEventListener('click', () => modal.classList.remove('showModal'));
 
-      window.addEventListener('click', e => {
-          e.target === modal ? modal.classList.remove('showModal') : false
-      });
+        window.addEventListener('click', e => {
+            e.target === modal ? modal.classList.remove('showModal') : false
+        });
     </script>
+    <script>
+        // Fetch Feedback Data from API
+        function loadFeedback() {
+            fetch("http://localhost:50287/api/test/feedback") // Adjust this to the correct API endpoint
+                .then(response => response.json())
+                .then(data => {
+                    console.log("✅ Feedback Data:", data);
+
+                    let respondedContainer = document.querySelector(".dashboard-grid .grid-box:nth-child(1) .grid-content");
+                    let notRespondedContainer = document.querySelector(".dashboard-grid .grid-box:nth-child(2) .grid-content");
+
+                    respondedContainer.innerHTML = ""; // Clear existing content
+                    notRespondedContainer.innerHTML = ""; // Clear existing content
+
+                    data.forEach(feedback => {
+                        let feedbackBox = document.createElement("div");
+                        feedbackBox.classList.add("inner-box");
+                        feedbackBox.innerText = `${feedback.message} - (${feedback.status})`;
+
+                        if (feedback.status === "Responded") {
+                            respondedContainer.appendChild(feedbackBox);
+                        } else {
+                            notRespondedContainer.appendChild(feedbackBox);
+                        }
+                    });
+                })
+                .catch(error => console.error("❌ Error fetching feedback:", error));
+        }
+
+        // Fetch Notifications
+        function loadNotifications() {
+            fetch("http://localhost:50287/api/test/notifications") // Adjust API endpoint if needed
+                .then(response => response.json())
+                .then(data => {
+                    console.log("✅ Notifications Data:", data);
+
+                    let notificationsContainer = document.querySelector(".dashboard-grid .grid-box:nth-child(3) .grid-content");
+                    notificationsContainer.innerHTML = ""; // Clear existing content
+
+                    data.forEach(notification => {
+                        let notificationBox = document.createElement("div");
+                        notificationBox.classList.add("inner-box");
+                        notificationBox.innerText = `${notification.message}`;
+                        notificationsContainer.appendChild(notificationBox);
+                    });
+                })
+                .catch(error => console.error("❌ Error fetching notifications:", error));
+        }
+
+        // Load data when the page is loaded
+        document.addEventListener("DOMContentLoaded", function () {
+            loadFeedback();
+            loadNotifications();
+        });
+    </script>
+    <script>
+        document.getElementById("logoutBtn").addEventListener("click", function () {
+            // Clear any stored user session (if using localStorage/sessionStorage)
+            localStorage.removeItem("user");
+            sessionStorage.removeItem("user");
+
+            // Redirect to homepage
+            window.location.href = "homepage.html";
+        });
+    </script>
+
 </body>
 </html>
