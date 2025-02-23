@@ -6,6 +6,7 @@ using System.Web.Services;
 using MySql.Data;
 using MySql.Data.MySqlClient;
 using System.Data;
+using System.Web.Script.Services;
 
 namespace ProjectTemplate
 {
@@ -14,7 +15,16 @@ namespace ProjectTemplate
 	[System.ComponentModel.ToolboxItem(false)]
 	[System.Web.Script.Services.ScriptService]
 
-	public class ProjectServices : System.Web.Services.WebService
+    public class FeedbackRequest
+    {
+        public int RequestId { get; set; }
+        public int SenderId { get; set; }
+        public int ReceiverId { get; set; }
+        public string RequestText { get; set; }
+        public string DueDate { get; set; } // Formatted as "YYYY-MM-DD"
+    }
+
+    public class ProjectServices : System.Web.Services.WebService
 	{
 		////////////////////////////////////////////////////////////////////////
 		///replace the values of these variables with your database credentials
@@ -329,6 +339,52 @@ namespace ProjectTemplate
                     }
                 }
             }
+        }
+
+        [WebMethod(EnableSession = true)]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)] // Ensures JSON response format
+        public FeedbackRequest[] GetFeedback()
+        {
+            // Ensure user is logged in
+            if (Session["user_id"] == null)
+            {
+                return new FeedbackRequest[0]; // Return empty array if not logged in
+            }
+
+            DataTable sqlDt = new DataTable("feedbackRequests");
+
+            string sqlConnectString = getConString();
+            string sqlSelect = @"
+        SELECT request_id, sender_id, receiver_id, request, due_date
+        FROM feedbackRequests
+        WHERE receiver_id = @UserId";
+
+            using (MySqlConnection sqlConnection = new MySqlConnection(sqlConnectString))
+            {
+                sqlConnection.Open();
+                using (MySqlCommand sqlCommand = new MySqlCommand(sqlSelect, sqlConnection))
+                {
+                    sqlCommand.Parameters.AddWithValue("@UserId", Session["user_id"]);
+
+                    MySqlDataAdapter sqlDa = new MySqlDataAdapter(sqlCommand);
+                    sqlDa.Fill(sqlDt);
+                }
+            }
+
+            List<FeedbackRequest> feedbackList = new List<FeedbackRequest>();
+            for (int i = 0; i < sqlDt.Rows.Count; i++)
+            {
+                feedbackList.Add(new FeedbackRequest
+                {
+                    RequestId = Convert.ToInt32(sqlDt.Rows[i]["request_id"]),
+                    SenderId = Convert.ToInt32(sqlDt.Rows[i]["sender_id"]),
+                    ReceiverId = Convert.ToInt32(sqlDt.Rows[i]["receiver_id"]),
+                    RequestText = sqlDt.Rows[i]["request"].ToString(),
+                    DueDate = Convert.ToDateTime(sqlDt.Rows[i]["due_date"]).ToString("yyyy-MM-dd")
+                });
+            }
+
+            return feedbackList.ToArray();
         }
 
     }
