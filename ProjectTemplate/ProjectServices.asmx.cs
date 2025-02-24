@@ -24,6 +24,15 @@ namespace ProjectTemplate
         public string DueDate { get; set; } // Formatted as "YYYY-MM-DD"
     }
 
+    public class FeedbackResponse
+    {
+        public int ResponseId { get; set; }
+        public int RequestId { get; set; }
+        public int ResponderId { get; set; }
+        public string ResponseText { get; set; }
+    }
+
+
     public class ProjectServices : System.Web.Services.WebService
 	{
 		////////////////////////////////////////////////////////////////////////
@@ -385,6 +394,56 @@ namespace ProjectTemplate
             }
 
             return feedbackList.ToArray();
+        }
+
+        [WebMethod(EnableSession = true)]
+        public string RespondToFeedback(int requestId, string responseText)
+        {
+            if (Session["user_id"] == null)
+            {
+                return "Error: User not logged in.";
+            }
+
+            int responderId = Convert.ToInt32(Session["user_id"]);
+            string sqlConnectString = getConString();
+
+            // Check if the feedback request exists and is assigned to the logged-in user
+            string checkQuery = "SELECT receiver_id FROM feedbackRequests WHERE request_id = @RequestId AND status = 'Pending'";
+
+            using (MySqlConnection sqlConnection = new MySqlConnection(sqlConnectString))
+            {
+                sqlConnection.Open();
+                using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, sqlConnection))
+                {
+                    checkCmd.Parameters.AddWithValue("@RequestId", requestId);
+                    object result = checkCmd.ExecuteScalar();
+
+                    if (result == null || Convert.ToInt32(result) != responderId)
+                    {
+                        return "Error: Invalid feedback request or already responded.";
+                    }
+                }
+
+                // Insert response into feedbackResponses
+                string insertQuery = "INSERT INTO feedbackResponses (request_id, responder_id, response) VALUES (@RequestId, @ResponderId, @ResponseText)";
+                using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, sqlConnection))
+                {
+                    insertCmd.Parameters.AddWithValue("@RequestId", requestId);
+                    insertCmd.Parameters.AddWithValue("@ResponderId", responderId);
+                    insertCmd.Parameters.AddWithValue("@ResponseText", responseText);
+                    insertCmd.ExecuteNonQuery();
+                }
+
+                // Update feedbackRequests to mark as "Responded"
+                string updateQuery = "UPDATE feedbackRequests SET status = 'Responded' WHERE request_id = @RequestId";
+                using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, sqlConnection))
+                {
+                    updateCmd.Parameters.AddWithValue("@RequestId", requestId);
+                    updateCmd.ExecuteNonQuery();
+                }
+            }
+
+            return "Success: Feedback response submitted.";
         }
 
     }
