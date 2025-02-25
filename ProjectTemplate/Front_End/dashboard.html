@@ -38,12 +38,12 @@
             z-index: 10;
         }
 
-        .banner h1 {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            flex-grow: 1;
-        }
+            .banner h1 {
+                font-size: 24px;
+                font-weight: bold;
+                text-align: center;
+                flex-grow: 1;
+            }
 
         .banner-buttons {
             position: absolute;
@@ -66,9 +66,9 @@
             display: inline-block;
         }
 
-        .btn:hover, #requestBtn:hover, .submitBtn:hover {
-            background-color: #5a2468;
-        }
+            .btn:hover, #requestBtn:hover, .submitBtn:hover {
+                background-color: #5a2468;
+            }
 
         /* Grid Container */
         .dashboard-grid {
@@ -124,21 +124,21 @@
             gap: 15px;
         }
 
-        .grid-content::-webkit-scrollbar {
-            width: 8px;
-        }
+            .grid-content::-webkit-scrollbar {
+                width: 8px;
+            }
 
-        .grid-content::-webkit-scrollbar-thumb {
-            background-color: #743089;
-            border-radius: 4px;
-        }
+            .grid-content::-webkit-scrollbar-thumb {
+                background-color: #743089;
+                border-radius: 4px;
+            }
 
-        .grid-content::-webkit-scrollbar-track {
-            background-color: #ddd;
-        }
+            .grid-content::-webkit-scrollbar-track {
+                background-color: #ddd;
+            }
 
         /* Inner Boxes (Extend Beyond Column Bounds) */
-        .inner-box, .requestList{
+        .inner-box, .requestList {
             background: white;
             padding: 20px;
             border-radius: 10px;
@@ -179,7 +179,7 @@
         .requestList {
             display: flex;
             gap: 50px;
-/*            padding: 0 10%;*/
+            /*            padding: 0 10%;*/
         }
 
         li {
@@ -258,9 +258,9 @@
             color: #282218;
         }
 
-        .closeBtn:hover {
-            color: #743089;
-        }
+            .closeBtn:hover {
+                color: #743089;
+            }
 
         .modalContainer.showModal {
             display: block;
@@ -284,9 +284,8 @@
         <ul class="requestList">
             <li>
                 <header>Person</header>
-                <select>
-                    <option>Search teammates</option>
-                    <option value=""></option>
+                <select id="userDropdown">
+                    <option value="">Search teammates</option>
                 </select>
             </li>
             <li>
@@ -387,31 +386,66 @@
     <script>
         // Fetch Feedback Data from API
         function loadFeedback() {
-            fetch("http://localhost:50287/api/test/feedback") // Adjust this to the correct API endpoint
+            let loggedInUserId = sessionStorage.getItem("user_id"); // Get logged-in user's ID
+
+            if (!loggedInUserId) {
+                console.error("❌ No user is logged in.");
+                return;
+            }
+
+            fetch(`http://localhost:50287/api/test/feedback/${loggedInUserId}`)
                 .then(response => response.json())
                 .then(data => {
-                    console.log("✅ Feedback Data:", data);
+                    console.log("✅ Feedback Data for user:", data);
 
                     let respondedContainer = document.querySelector(".dashboard-grid .grid-box:nth-child(1) .grid-content");
                     let notRespondedContainer = document.querySelector(".dashboard-grid .grid-box:nth-child(2) .grid-content");
+                    let receivedContainer = document.querySelector(".dashboard-grid .grid-box:nth-child(3) .grid-content");
 
-                    respondedContainer.innerHTML = ""; // Clear existing content
-                    notRespondedContainer.innerHTML = ""; // Clear existing content
+                    respondedContainer.innerHTML = "";
+                    notRespondedContainer.innerHTML = "";
+                    receivedContainer.innerHTML = "";
 
                     data.forEach(feedback => {
                         let feedbackBox = document.createElement("div");
                         feedbackBox.classList.add("inner-box");
-                        feedbackBox.innerText = `${feedback.message} - (${feedback.status})`;
 
-                        if (feedback.status === "Responded") {
-                            respondedContainer.appendChild(feedbackBox);
-                        } else {
-                            notRespondedContainer.appendChild(feedbackBox);
+                        if (feedback.receiver_id == loggedInUserId) {
+                            // If user is the receiver, they need to respond
+                            feedbackBox.innerHTML = `
+                            <p><strong>From:</strong> ${feedback.sender_name}</p>
+                            <p>${feedback.message}</p>
+                            <p><strong>Status:</strong> ${feedback.status}</p>
+                            ${feedback.status === "Pending"
+                                    ? `<button onclick="markAsResponded(${feedback.feedback_id})">Mark as Responded</button>
+                               <textarea id="responseText${feedback.feedback_id}" placeholder="Write a response..."></textarea>`
+                                    : `<p><strong>Response:</strong> ${feedback.response}</p>`}
+                        `;
+
+                            if (feedback.status === "Pending") {
+                                notRespondedContainer.appendChild(feedbackBox);
+                            } else {
+                                respondedContainer.appendChild(feedbackBox);
+                            }
+                        } else if (feedback.sender_id == loggedInUserId) {
+                            // If user is the sender, show the response
+                            feedbackBox.innerHTML = `
+                            <p><strong>To:</strong> ${feedback.receiver_name}</p>
+                            <p>${feedback.message}</p>
+                            <p><strong>Status:</strong> ${feedback.status}</p>
+                            <p><strong>Response:</strong> ${feedback.response}</p>
+                        `;
+                            receivedContainer.appendChild(feedbackBox);
                         }
                     });
                 })
                 .catch(error => console.error("❌ Error fetching feedback:", error));
         }
+
+        // Load feedback when the page is loaded
+        document.addEventListener("DOMContentLoaded", function () {
+            loadFeedback();
+        });
 
         // Fetch Notifications
         function loadNotifications() {
@@ -440,7 +474,7 @@
         });
     </script>
     <script>
-        document.getElementById("logoutBtn").addEventListener("click", function () {
+        document.querySelector(".btn[href='homepage.html']").addEventListener("click", function () {
             // Clear any stored user session (if using localStorage/sessionStorage)
             localStorage.removeItem("user");
             sessionStorage.removeItem("user");
@@ -448,6 +482,164 @@
             // Redirect to homepage
             window.location.href = "homepage.html";
         });
+        document.addEventListener("DOMContentLoaded", function () {
+            loadUsers();
+        });
+
+        function loadUsers() {
+            fetch("http://localhost:50287/api/test/getUsers")
+                .then(response => response.json())
+                .then(data => {
+                    console.log("✅ Users Data:", data);
+
+                    let dropdown = document.getElementById("userDropdown"); // Target correct dropdown
+                    dropdown.innerHTML = `<option value="">Search teammates</option>`; // Default option
+
+                    data.forEach(user => {
+                        let option = document.createElement("option");
+                        option.value = user.user_id;
+                        option.textContent = user.full_name;
+                        dropdown.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("❌ Error fetching users:", error));
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelector(".modalForm").addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                let selectedUserId = document.getElementById("userDropdown").value;
+                let feedbackMessage = document.getElementById("formRequest").value.trim();
+                let senderId = sessionStorage.getItem("user_id"); // Get logged-in user ID
+
+                if (!selectedUserId || !feedbackMessage) {
+                    alert("❌ Please select a user and enter feedback.");
+                    return;
+                }
+
+                fetch("http://localhost:50287/api/test/submitFeedback", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        sender_id: senderId,
+                        receiver_id: selectedUserId,
+                        message: feedbackMessage
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        document.getElementById("formRequest").value = ""; // Clear form after submission
+                        modal.classList.remove("showModal"); // Close modal
+                    })
+                    .catch(error => console.error("❌ Error submitting feedback:", error));
+            });
+        });
+        function markAsResponded(feedbackId) {
+            let responseText = document.getElementById(`responseText${feedbackId}`).value.trim();
+
+            if (!responseText) {
+                alert("❌ Please enter a response.");
+                return;
+            }
+
+            fetch("http://localhost:50287/api/test/respondToFeedback", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    feedback_id: feedbackId,
+                    responseMessage: responseText
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    loadFeedback(); // Reload feedback after responding
+                })
+                .catch(error => console.error("❌ Error submitting response:", error));
+        }
+        // Function to load feedback into the dashboard
+        function loadFeedback() {
+            let loggedInUserId = sessionStorage.getItem("user_id");
+
+            if (!loggedInUserId) {
+                console.error("❌ No user is logged in.");
+                return;
+            }
+
+            fetch(`http://localhost:50287/api/test/feedback/${loggedInUserId}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("✅ Feedback Data for user:", data);
+
+                    let respondedContainer = document.querySelector(".dashboard-grid .grid-box:nth-child(1) .grid-content");
+                    let notRespondedContainer = document.querySelector(".dashboard-grid .grid-box:nth-child(2) .grid-content");
+
+                    respondedContainer.innerHTML = "";
+                    notRespondedContainer.innerHTML = "";
+
+                    data.forEach(feedback => {
+                        let feedbackBox = document.createElement("div");
+                        feedbackBox.classList.add("inner-box");
+                        feedbackBox.innerHTML = `
+                        <p><strong>From:</strong> ${feedback.sender_name}</p>
+                        <p>${feedback.message}</p>
+                        <p><strong>Status:</strong> ${feedback.status}</p>
+                        ${feedback.status === "Pending" ? `
+                            <textarea id="response_${feedback.feedback_id}" placeholder="Write a response..."></textarea>
+                            <button onclick="submitResponse(${feedback.feedback_id})">Submit Response</button>
+                        ` : `<p><strong>Response:</strong> ${feedback.response || "No response given."}</p>`}
+                    `;
+
+                        if (feedback.status === "Responded") {
+                            respondedContainer.appendChild(feedbackBox);
+                        } else {
+                            notRespondedContainer.appendChild(feedbackBox);
+                        }
+                    });
+                })
+                .catch(error => console.error("❌ Error fetching feedback:", error));
+        }
+        function submitResponse(feedbackId) {
+            let responseMessage = document.getElementById(`response_${feedbackId}`).value.trim();
+
+            if (!responseMessage) {
+                alert("❌ Please enter a response before submitting.");
+                return;
+            }
+
+            fetch("http://localhost:50287/api/test/respondToFeedback", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    feedback_id: feedbackId,
+                    responseMessage: responseMessage
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    loadFeedback(); // Refresh feedback list
+                })
+                .catch(error => console.error("❌ Error submitting response:", error));
+        }
+
+
+
+
+
+
+
+
+
+
+
     </script>
 
 </body>

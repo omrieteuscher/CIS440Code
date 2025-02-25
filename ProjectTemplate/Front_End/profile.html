@@ -39,12 +39,12 @@
             left: 0;
         }
 
-        .banner h1 {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            flex-grow: 1;
-        }
+            .banner h1 {
+                font-size: 24px;
+                font-weight: bold;
+                text-align: center;
+                flex-grow: 1;
+            }
 
         .banner-buttons {
             position: absolute;
@@ -64,9 +64,9 @@
             margin-top: 60px; /* Push it down so it doesn’t overlap with the banner */
         }
 
-        .profile-container h2 {
-            margin-bottom: 20px;
-        }
+            .profile-container h2 {
+                margin-bottom: 20px;
+            }
 
         .profile-info {
             font-size: 16px;
@@ -85,10 +85,10 @@
             background-color: #f4f4f4;
         }
 
-        input:read-only {
-            background-color: #ddd;
-            cursor: not-allowed;
-        }
+            input:read-only {
+                background-color: #ddd;
+                cursor: not-allowed;
+            }
 
         /* Button Styling */
         .btn {
@@ -104,9 +104,9 @@
             margin-top: 15px;
         }
 
-        .btn:hover {
-            background-color: #5a2468;
-        }
+            .btn:hover {
+                background-color: #5a2468;
+            }
 
         /* Dashboard Button */
         .dashboard-btn {
@@ -124,9 +124,9 @@
             right: 20px;
         }
 
-        .dashboard-btn:hover {
-            background-color: #5a2468;
-        }
+            .dashboard-btn:hover {
+                background-color: #5a2468;
+            }
     </style>
 </head>
 <body>
@@ -142,13 +142,13 @@
         <h2>Profile Details</h2>
         <form id="profileForm">
             <label class="profile-info">First Name:</label>
-            <input type="text" id="firstName" value="John" readonly>
+            <input type="text" id="firstName" readonly>
 
             <label class="profile-info">Last Name:</label>
-            <input type="text" id="lastName" value="Doe" readonly>
+            <input type="text" id="lastName" readonly>
 
             <label class="profile-info">Email:</label>
-            <input type="email" id="email" value="johndoe@example.com" readonly>
+            <input type="email" id="email" readonly>
 
             <label class="profile-info">Password:</label>
             <input type="password" id="password" value="********" readonly>
@@ -159,18 +159,68 @@
     </div>
 
     <script>
-        const editBtn = document.getElementById("editBtn");
-        const inputs = document.querySelectorAll("input");
+        document.addEventListener("DOMContentLoaded", function () {
+            let userId = sessionStorage.getItem("user_id");
 
-        editBtn.addEventListener("click", function () {
-            if (editBtn.innerText === "Edit") {
-                inputs.forEach(input => input.removeAttribute("readonly"));
-                editBtn.innerText = "Save";
-            } else {
-                inputs.forEach(input => input.setAttribute("readonly", true));
-                editBtn.innerText = "Edit";
+            if (!userId) {
+                alert("You are not logged in!");
+                window.location.href = "login.html";
+                return;
             }
+
+            // Fetch existing user details
+            fetch(`http://localhost:50287/api/test/getProfile?user_id=${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("firstName").value = data.first_name;
+                    document.getElementById("lastName").value = data.last_name;
+                    document.getElementById("email").value = data.email;
+                })
+                .catch(error => {
+                    console.error("❌ Error fetching profile:", error);
+                    alert("❌ Could not load profile.");
+                });
+
+            const editBtn = document.getElementById("editBtn");
+            const inputs = document.querySelectorAll("input");
+
+            editBtn.addEventListener("click", function () {
+                if (editBtn.innerText === "Edit") {
+                    inputs.forEach(input => input.removeAttribute("readonly"));
+                    editBtn.innerText = "Save";
+                } else {
+                    // Collect updated data
+                    let updatedUser = {
+                        Id: userId,
+                        first_name: document.getElementById("firstName").value,
+                        last_name: document.getElementById("lastName").value,
+                        Email: document.getElementById("email").value
+                    };
+
+                    // Send update request to API
+                    fetch("http://localhost:50287/api/test/updateProfile", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(updatedUser)
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert("✅ Profile updated successfully!");
+                            } else {
+                                alert("❌ " + data.message);
+                            }
+                            inputs.forEach(input => input.setAttribute("readonly", true));
+                            editBtn.innerText = "Edit";
+                        })
+                        .catch(error => {
+                            console.error("❌ Error updating profile:", error);
+                            alert("❌ Update failed.");
+                        });
+                }
+            });
         });
+
     </script>
 
 </body>

@@ -5,133 +5,23 @@ using MySql.Data.MySqlClient;
 
 namespace ProjectTemplate.Controllers
 {
+    public class User
+    {
+        public int Id { get; set; }
+        public string first_name { get; set; }
+        public string last_name { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+    public class FeedbackResponseModel
+    {
+        public int feedback_id { get; set; }
+        public string responseMessage { get; set; }
+    }
+
     [RoutePrefix("api/test")]
     public class TestController : ApiController
     {
-        // ✅ Test Database Connection
-        [HttpGet]
-        [Route("db")]
-        public IHttpActionResult TestDbConnection()
-        {
-            try
-            {
-                DatabaseHelper dbHelper = new DatabaseHelper();
-                dbHelper.TestConnection();
-                return Ok("✅ Database connection attempted. Check console for results.");
-            }
-            catch (Exception ex)
-            {
-                return InternalServerError(new Exception("❌ Database connection failed: " + ex.Message));
-            }
-        }
-
-        // ✅ Data Models
-        public class Feedback
-        {
-            public int Id { get; set; }
-            public string Message { get; set; }
-            public string Status { get; set; }
-        }
-
-        public class Notification
-        {
-            public int Id { get; set; }
-            public string Message { get; set; }
-        }
-
-        public class User
-        {
-            public int Id { get; set; }
-            public string FirstName { get; set; }
-            public string LastName { get; set; }
-            public string Email { get; set; }
-            public string Password { get; set; }
-        }
-
-        // ✅ Fetch User Feedback
-        [HttpGet]
-        [Route("feedback")]
-        public IHttpActionResult GetFeedback()
-        {
-            var feedbackList = new List<Feedback>
-            {
-                new Feedback { Id = 1, Message = "Great job on the project!", Status = "Responded" },
-                new Feedback { Id = 2, Message = "Can you provide more details?", Status = "Not Responded" },
-                new Feedback { Id = 3, Message = "I really liked your design!", Status = "Responded" }
-            };
-
-            return Ok(feedbackList);
-        }
-
-        // ✅ Fetch User Notifications
-        [HttpGet]
-        [Route("notifications")]
-        public IHttpActionResult GetNotifications()
-        {
-            var notifications = new List<Notification>
-            {
-                new Notification { Id = 1, Message = "New feedback received!" },
-                new Notification { Id = 2, Message = "Your request has been approved." }
-            };
-
-            return Ok(notifications);
-        }
-
-        // ✅ Login API
-        [HttpPost]
-        [Route("login")]
-        public IHttpActionResult Login(User user)
-        {
-            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
-            {
-                try
-                {
-                    conn.Open();
-                    string query = "SELECT user_id, Email FROM Users WHERE Email = @Email AND Password = @Password LIMIT 1";
-
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@Email", user.Email);
-                        cmd.Parameters.AddWithValue("@Password", user.Password); // Ensure passwords match (hash if needed)
-
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read()) // If a user is found
-                            {
-                                int userId = reader.GetInt32(0); // Fetch user_id (not Id)
-                                string userEmail = reader.GetString(1);
-
-                                return Ok(new
-                                {
-                                    success = true,
-                                    message = "✅ Login successful!",
-                                    userId = userId,  // Ensure this uses user_id
-                                    email = userEmail
-                                });
-                            }
-                            else
-                            {
-                                return BadRequest("❌ No matching user found. Check email and password.");
-                            }
-                        }
-                    }
-                }
-                catch (MySqlException ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("❌ MySQL Exception: " + ex.Message);
-                    return InternalServerError(new Exception("❌ MySQL Error: " + ex.Message));
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("❌ General Error: " + ex.Message);
-                    return InternalServerError(new Exception("❌ General Error: " + ex.Message));
-                }
-
-            }
-        }
-
-
-        // ✅ Register API
         [HttpPost]
         [Route("register")]
         public IHttpActionResult Register(User user)
@@ -143,7 +33,7 @@ namespace ProjectTemplate.Controllers
                     conn.Open();
 
                     // ✅ Check if email already exists
-                    string checkQuery = "SELECT COUNT(*) FROM Users WHERE Email = @Email";
+                    string checkQuery = "SELECT COUNT(*) FROM users WHERE email = @Email";
                     using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
                     {
                         checkCmd.Parameters.AddWithValue("@Email", user.Email);
@@ -156,14 +46,14 @@ namespace ProjectTemplate.Controllers
                     }
 
                     // ✅ Insert new user into the database
-                    string insertQuery = "INSERT INTO Users (FirstName, LastName, Email, Password) VALUES (@FirstName, @LastName, @Email, @Password)";
+                    string insertQuery = "INSERT INTO users (first_name, last_name, email, password) VALUES (@first_name, @last_name, @Email, @Password)";
 
                     using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
                     {
-                        cmd.Parameters.AddWithValue("@FirstName", user.FirstName);
-                        cmd.Parameters.AddWithValue("@LastName", user.LastName);
+                        cmd.Parameters.AddWithValue("@first_name", user.first_name);
+                        cmd.Parameters.AddWithValue("@last_name", user.last_name);
                         cmd.Parameters.AddWithValue("@Email", user.Email);
-                        cmd.Parameters.AddWithValue("@Password", HashPassword(user.Password)); // Hash password
+                        cmd.Parameters.AddWithValue("@Password", user.Password); // Store as plaintext
 
                         int rowsAffected = cmd.ExecuteNonQuery();
                         if (rowsAffected > 0)
@@ -183,15 +73,371 @@ namespace ProjectTemplate.Controllers
             }
         }
 
-
-        // ✅ Password Hashing Function
-        public static string HashPassword(string password)
+        [HttpPost]
+        [Route("login")]
+        public IHttpActionResult Login(User user)
         {
-            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
             {
-                var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-                return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
+                try
+                {
+                    conn.Open();
+                    string query = "SELECT user_id, Email FROM users WHERE Email = @Email AND Password = @Password";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Email", user.Email);
+                        cmd.Parameters.AddWithValue("@Password", user.Password); // Store as plaintext
+
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read()) // If a user is found
+                            {
+                                int userId = reader.GetInt32(0);
+                                string userEmail = reader.GetString(1);
+
+                                return Ok(new
+                                {
+                                    success = true,
+                                    message = "✅ Login successful!",
+                                    userId = userId,
+                                    email = userEmail
+                                });
+                            }
+                            else
+                            {
+                                return BadRequest("❌ Invalid email or password.");
+                            }
+                        }
+                    }
+                }
+                catch (MySqlException ex)
+                {
+                    return InternalServerError(new Exception("❌ MySQL Error: " + ex.Message));
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ General Error: " + ex.Message));
+                }
             }
         }
+        [HttpGet]
+        [Route("getProfile")]
+        public IHttpActionResult GetProfile(int user_id)
+        {
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+                    string query = "SELECT first_name, last_name, email FROM users WHERE user_id = @user_id";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", user_id);
+
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read()) // If a user is found
+                            {
+                                var userProfile = new
+                                {
+                                    first_name = reader.GetString(0),
+                                    last_name = reader.GetString(1),
+                                    email = reader.GetString(2)
+                                };
+
+                                return Ok(userProfile);
+                            }
+                            else
+                            {
+                                return BadRequest("❌ User not found.");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
+        [HttpPost]
+        [Route("updateProfile")]
+        public IHttpActionResult UpdateProfile(User user)
+        {
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+                    string query = "UPDATE users SET first_name = @first_name, last_name = @last_name, email = @Email WHERE user_id = @user_id";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@first_name", user.first_name);
+                        cmd.Parameters.AddWithValue("@last_name", user.last_name);
+                        cmd.Parameters.AddWithValue("@Email", user.Email);
+                        cmd.Parameters.AddWithValue("@user_id", user.Id);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return Ok(new { success = true, message = "✅ Profile updated successfully!" });
+                        }
+                        else
+                        {
+                            return BadRequest("❌ Update failed. No changes were made.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
+        [HttpGet]
+        [Route("getUsers")]
+        public IHttpActionResult GetUsers()
+        {
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+                    string query = "SELECT user_id, first_name, last_name FROM users";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            List<object> users = new List<object>();
+
+                            while (reader.Read())
+                            {
+                                users.Add(new
+                                {
+                                    user_id = reader.GetInt32(0),
+                                    full_name = reader.GetString(1) + " " + reader.GetString(2)
+                                });
+                            }
+
+                            return Ok(users);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
+        [HttpPost]
+        [Route("submitFeedback")]
+        public IHttpActionResult SubmitFeedback(Feedback feedback)
+        {
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+
+                    string insertQuery = "INSERT INTO feedback (sender_id, receiver_id, message, status) VALUES (@SenderId, @ReceiverId, @Message, 'Pending')";
+
+                    using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@SenderId", feedback.sender_id);
+                        cmd.Parameters.AddWithValue("@ReceiverId", feedback.receiver_id);
+                        cmd.Parameters.AddWithValue("@Message", feedback.message);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return Ok(new { success = true, message = "✅ Feedback submitted successfully!" });
+                        }
+                        else
+                        {
+                            return BadRequest("❌ Feedback submission failed.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
+
+        // Feedback model
+        public class Feedback
+        {
+            public int sender_id { get; set; }
+            public int receiver_id { get; set; }
+            public string message { get; set; }
+        }
+
+        [HttpGet]
+        [Route("feedback")]
+        public IHttpActionResult GetFeedback()
+        {
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+                    string query = "SELECT feedback_id, sender_id, receiver_id, message, status FROM feedback";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            List<object> feedbackList = new List<object>();
+
+                            while (reader.Read())
+                            {
+                                feedbackList.Add(new
+                                {
+                                    feedback_id = reader.GetInt32(0),
+                                    sender_id = reader.GetInt32(1),
+                                    receiver_id = reader.GetInt32(2),
+                                    message = reader.GetString(3),
+                                    status = reader.GetString(4)
+                                });
+                            }
+
+                            return Ok(feedbackList);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
+        [HttpGet]
+        [Route("feedback/{user_id}")]
+        public IHttpActionResult GetFeedback(int user_id)
+        {
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+                    string query = @"
+                SELECT f.feedback_id, f.sender_id, f.receiver_id, f.message, f.status, f.response,
+                       sender.first_name AS sender_name, receiver.first_name AS receiver_name
+                FROM feedback f
+                JOIN users sender ON f.sender_id = sender.user_id
+                JOIN users receiver ON f.receiver_id = receiver.user_id
+                WHERE f.sender_id = @user_id OR f.receiver_id = @user_id
+                ORDER BY f.feedback_id DESC";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", user_id);
+
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            List<object> feedbackList = new List<object>();
+
+                            while (reader.Read())
+                            {
+                                feedbackList.Add(new
+                                {
+                                    feedback_id = reader.GetInt32(0),
+                                    sender_id = reader.GetInt32(1),
+                                    receiver_id = reader.GetInt32(2),
+                                    message = reader.GetString(3),
+                                    status = reader.GetString(4),
+                                    response = reader.IsDBNull(5) ? "No response given." : reader.GetString(5),
+                                    sender_name = reader.GetString(6),
+                                    receiver_name = reader.GetString(7)
+                                });
+                            }
+
+                            return Ok(feedbackList);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("markAsResponded/{feedbackId}")]
+        public IHttpActionResult MarkAsResponded(int feedbackId)
+        {
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+                    string query = "UPDATE feedback SET status = 'Responded' WHERE feedback_id = @FeedbackId";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@FeedbackId", feedbackId);
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            return Ok(new { success = true, message = "✅ Feedback marked as responded!" });
+                        }
+                        else
+                        {
+                            return BadRequest("❌ Failed to update feedback.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
+        [HttpPost]
+        [Route("respondToFeedback")]
+        public IHttpActionResult RespondToFeedback(FeedbackResponseModel model)
+        {
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+                    string query = "UPDATE feedback SET status = 'Responded', response = @ResponseMessage WHERE feedback_id = @FeedbackId";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ResponseMessage", model.responseMessage);
+                        cmd.Parameters.AddWithValue("@FeedbackId", model.feedback_id);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return Ok(new { success = true, message = "✅ Response submitted successfully!" });
+                        }
+                        else
+                        {
+                            return BadRequest("❌ Failed to submit response.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
+
+
+
+
+
+
     }
 }

@@ -8,10 +8,10 @@
 
     <script>
         function loginUser(event) {
-            event.preventDefault(); // Prevent form from submitting traditionally
+            event.preventDefault(); // Prevent default form submission
 
-            let email = document.getElementById("email").value;
-            let password = document.getElementById("password").value;
+            let email = document.getElementById("email").value.trim();
+            let password = document.getElementById("password").value.trim();
 
             fetch("http://localhost:50287/api/test/login", {
                 method: "POST",
@@ -21,15 +21,25 @@
                 body: JSON.stringify({ Email: email, Password: password })
             })
                 .then(response => {
-                    if (response.ok) {
-                        return response.json();
-                    } else {
+                    if (!response.ok) {
                         throw new Error("❌ Invalid email or password.");
                     }
+                    return response.json();
                 })
                 .then(data => {
-                    alert(data.message); // Show success message
-                    window.location.href = "dashboard.html"; // Redirect on success
+                    if (data.success) {
+                        // ✅ Store user details in sessionStorage
+                        sessionStorage.setItem("user_id", data.userId);
+                        sessionStorage.setItem("user_email", data.email);
+
+                        console.log("User ID stored in sessionStorage:", sessionStorage.getItem("user_id")); // Debugging
+                        console.log("User Email stored in sessionStorage:", sessionStorage.getItem("user_email")); // Debugging
+
+                        alert("✅ Login successful!");
+                        window.location.href = "dashboard.html"; // Redirect to dashboard
+                    } else {
+                        alert("❌ " + data.message);
+                    }
                 })
                 .catch(error => {
                     alert(error.message);
