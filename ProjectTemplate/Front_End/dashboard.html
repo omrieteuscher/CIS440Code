@@ -273,6 +273,7 @@
     <div class="banner">
         <h1>Welcome to the Pixels Feedback Dashboard!</h1>
         <div class="banner-buttons">
+            <a href="homepage.html" class="btn">Home</a>
             <a href="profile.html" class="btn">My Profile</a>
             <a href="homepage.html" class="btn">Log Out</a>
         </div>
@@ -413,14 +414,14 @@
                         if (feedback.receiver_id == loggedInUserId) {
                             // If user is the receiver, they need to respond
                             feedbackBox.innerHTML = `
-                            <p><strong>From:</strong> ${feedback.sender_name}</p>
-                            <p>${feedback.message}</p>
-                            <p><strong>Status:</strong> ${feedback.status}</p>
-                            ${feedback.status === "Pending"
+                                <p><strong>From:</strong> ${feedback.sender_name}</p>
+                                <p>${feedback.message}</p>
+                                <p><strong>Status:</strong> ${feedback.status}</p>
+                                ${feedback.status === "Pending"
                                     ? `<button onclick="markAsResponded(${feedback.feedback_id})">Mark as Responded</button>
-                               <textarea id="responseText${feedback.feedback_id}" placeholder="Write a response..."></textarea>`
+                                   <textarea id="responseText${feedback.feedback_id}" placeholder="Write a response..."></textarea>`
                                     : `<p><strong>Response:</strong> ${feedback.response}</p>`}
-                        `;
+                            `;
 
                             if (feedback.status === "Pending") {
                                 notRespondedContainer.appendChild(feedbackBox);
@@ -430,11 +431,11 @@
                         } else if (feedback.sender_id == loggedInUserId) {
                             // If user is the sender, show the response
                             feedbackBox.innerHTML = `
-                            <p><strong>To:</strong> ${feedback.receiver_name}</p>
-                            <p>${feedback.message}</p>
-                            <p><strong>Status:</strong> ${feedback.status}</p>
-                            <p><strong>Response:</strong> ${feedback.response}</p>
-                        `;
+                                <p><strong>To:</strong> ${feedback.receiver_name}</p>
+                                <p>${feedback.message}</p>
+                                <p><strong>Status:</strong> ${feedback.status}</p>
+                                <p><strong>Response:</strong> ${feedback.response}</p>
+                            `;
                             receivedContainer.appendChild(feedbackBox);
                         }
                     });
@@ -586,14 +587,14 @@
                         let feedbackBox = document.createElement("div");
                         feedbackBox.classList.add("inner-box");
                         feedbackBox.innerHTML = `
-                        <p><strong>From:</strong> ${feedback.sender_name}</p>
-                        <p>${feedback.message}</p>
-                        <p><strong>Status:</strong> ${feedback.status}</p>
-                        ${feedback.status === "Pending" ? `
-                            <textarea id="response_${feedback.feedback_id}" placeholder="Write a response..."></textarea>
-                            <button onclick="submitResponse(${feedback.feedback_id})">Submit Response</button>
-                        ` : `<p><strong>Response:</strong> ${feedback.response || "No response given."}</p>`}
-                    `;
+                            <p><strong>From:</strong> ${feedback.sender_name}</p>
+                            <p>${feedback.message}</p>
+                            <p><strong>Status:</strong> ${feedback.status}</p>
+                            ${feedback.status === "Pending" ? `
+                                <textarea id="response_${feedback.feedback_id}" placeholder="Write a response..."></textarea>
+                                <button onclick="submitResponse(${feedback.feedback_id})">Submit Response</button>
+                            ` : `<p><strong>Response:</strong> ${feedback.response || "No response given."}</p>`}
+                        `;
 
                         if (feedback.status === "Responded") {
                             respondedContainer.appendChild(feedbackBox);

@@ -435,9 +435,227 @@ namespace ProjectTemplate.Controllers
         }
 
 
+        [HttpGet]
+        [Route("discussion")]
+        public IHttpActionResult GetDiscussionPosts()
+        {
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+                    string query = @"
+                SELECT d.post_id, d.user_id, d.message, d.created_at, 
+                       u.first_name, u.last_name 
+                FROM discussionPosts d
+                JOIN users u ON d.user_id = u.user_id
+                ORDER BY d.created_at DESC";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            List<object> posts = new List<object>();
+
+                            while (reader.Read())
+                            {
+                                posts.Add(new
+                                {
+                                    post_id = reader.GetInt32(0),
+                                    user_id = reader.GetInt32(1),
+                                    message = reader.GetString(2),
+                                    created_at = reader.GetDateTime(3).ToString("yyyy-MM-dd HH:mm:ss"),
+                                    user_name = reader.GetString(4) + " " + reader.GetString(5)
+                                });
+                            }
+
+                            return Ok(posts);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
 
 
+        [HttpPost]
+        [Route("discussion")]
+        public IHttpActionResult PostDiscussionMessage([FromBody] DiscussionPost newPost)
+        {
+
+            if (newPost == null)
+            {
+                return BadRequest("❌ Received null request.");
+            }
+
+            if (newPost.UserId == null || newPost.UserId <= 0)
+            {
+                return BadRequest("❌ User ID is missing or invalid.");
+            }
+
+            if (string.IsNullOrWhiteSpace(newPost.Message))
+            {
+                return BadRequest("❌ Message cannot be empty.");
+            }
+
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+                    string query = "INSERT INTO discussionPosts (user_id, message) VALUES (@user_id, @message)";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", newPost.UserId);
+                        cmd.Parameters.AddWithValue("@message", newPost.Message);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return Ok(new { success = true, message = "✅ Message posted successfully!" });
+                        }
+                        else
+                        {
+                            return BadRequest("❌ Failed to post message.");
+                        }
+                    }
+                }
+                catch (MySqlException ex)
+                {
+                    return InternalServerError(new Exception($"❌ MySQL Error: {ex.Message}"));
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception($"❌ General Error: {ex.Message}"));
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("discussion/comment")]
+        public IHttpActionResult PostComment([FromBody] DiscussionComment newComment)
+        {
+            if (newComment == null || string.IsNullOrWhiteSpace(newComment.CommentText))
+            {
+                return BadRequest("❌ Comment cannot be empty.");
+            }
+
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+
+
+                    string checkUser = "SELECT COUNT(*) FROM users WHERE user_id = @user_id";
+                    using (MySqlCommand checkCmd = new MySqlCommand(checkUser, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@user_id", newComment.UserId);
+                        int userExists = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+                        if (userExists == 0)
+                        {
+                            return BadRequest("❌ User does not exist.");
+                        }
+                    }
+
+
+                    string query = "INSERT INTO discussionComments (post_id, user_id, comment_text) VALUES (@post_id, @user_id, @comment_text)";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@post_id", newComment.PostId);
+                        cmd.Parameters.AddWithValue("@user_id", newComment.UserId);
+                        cmd.Parameters.AddWithValue("@comment_text", newComment.CommentText);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return Ok(new { success = true, message = "✅ Comment posted successfully!" });
+                        }
+                        else
+                        {
+                            return BadRequest("❌ Failed to post comment.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("discussion/comments/{post_id}")]
+        public IHttpActionResult GetComments(int post_id)
+        {
+            using (MySqlConnection conn = new DatabaseHelper().GetConnection())
+            {
+                try
+                {
+                    conn.Open();
+                    string query = @"
+                SELECT c.comment_id, c.post_id, c.user_id, c.comment_text, c.created_at, 
+                       u.first_name, u.last_name 
+                FROM discussionComments c
+                JOIN users u ON c.user_id = u.user_id
+                WHERE c.post_id = @post_id
+                ORDER BY c.created_at ASC";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@post_id", post_id);
+
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            List<object> comments = new List<object>();
+
+                            while (reader.Read())
+                            {
+                                comments.Add(new
+                                {
+                                    comment_id = reader.GetInt32(0),
+                                    post_id = reader.GetInt32(1),
+                                    user_id = reader.GetInt32(2),
+                                    comment_text = reader.GetString(3),
+                                    created_at = reader.GetDateTime(4).ToString("yyyy-MM-dd HH:mm:ss"),
+                                    user_name = reader.GetString(5) + " " + reader.GetString(6)
+                                });
+                            }
+
+                            return Ok(comments);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return InternalServerError(new Exception("❌ Database error: " + ex.Message));
+                }
+            }
+        }
 
 
     }
+
+
+    public class DiscussionPost
+    {
+        public int? UserId { get; set; }
+        public string Message { get; set; }
+    }
+
+    public class DiscussionComment
+    {
+        public int? PostId { get; set; }
+        public int? UserId { get; set; }
+        public string CommentText { get; set; }
+    }
+
+
 }
+
+

@@ -15,18 +15,21 @@
 
         html, body {
             font-family: 'Futura', sans-serif;
-            overflow-x: hidden;
-            width: 100vw;
-            height: 100vh;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             background-color: #f4f4f4;
             text-align: center;
+            overflow: hidden
         }
 
-        /* Banner Styling */
+
         .banner {
             width: 100%;
             max-width: 100vw;
@@ -52,12 +55,12 @@
             gap: 10px;
         }
 
-        /* Button Styling */
+
         .btn {
             padding: 10px 20px;
             font-size: 14px;
             font-family: 'Futura', sans-serif;
-            background-color: #743089; /* Hallmark purple */
+            background-color: #743089;
             color: white;
             border: none;
             cursor: pointer;
@@ -70,11 +73,13 @@
                 background-color: #5a2468;
             }
 
-        /* Main Content */
         .main-content {
-            margin-top: 150px;
-            width: 80%;
+            width: 100%;
+            height: 100%;
             max-width: 800px;
+            padding: 10px;
+            margin-top: 150px;
+            overflow-y: auto;
         }
 
             .main-content h2 {
@@ -87,6 +92,83 @@
                 color: #666;
                 margin-top: 10px;
             }
+
+        #discussion-board {
+            width: 85vw;
+            max-height: 80vh;
+            height: auto;
+            background-color: #743089;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            overflow-y: auto;
+        }
+
+
+            #discussion-board h3 {
+                font-size: 28px;
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 15px;
+            }
+
+        #messages-container {
+            width: 100%;
+            flex-grow: 1;
+            min-height: 60vh;
+            max-height: 50vh;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 18px;
+            color: black;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #post-section textarea {
+            width: 95%;
+            height: 80px;
+            font-size: 16px;
+            border-radius: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: white;
+            color: black;
+        }
+
+        #post-section button {
+            font-size: 18px;
+            padding: 12px 20px;
+            background-color: white;
+            color: #743089;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+            #post-section button:hover {
+                background-color: #5a2468;
+                color: white;
+            }
+
+        #post-section {
+            width: 100%;
+            padding: 10px;
+            border-top: 2px solid white;
+            background: #743089;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -95,16 +177,237 @@
     <div class="banner">
         <h1>Pixels Feedback</h1>
         <div class="banner-buttons">
-            <a href="login.html" class="btn">Login</a>
-            <a href="createaccount.html" class="btn">Create Account</a>
+            <a href="login.html" id="login-btn" class="btn">Login</a>
+            <a href="createaccount.html" id="signup-btn" class="btn">Create Account</a>
+            <a href="dashboard.html" id="dashboard-btn" class="btn" style="display: none;">Back to Dashboard</a>
+            <button id="logout-btn" class="btn" style="display: none;" onclick="logout()">Logout</button>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
-        <h2>Optimize your business with professional feedback</h2>
-        <p>Send and receive feedback to your team members and managers</p>
+        <div id="business-message">
+            <h2>Optimize your business with professional feedback</h2>
+            <p>Send and receive feedback to your team members and managers</p>
+        </div>
+
+        <!-- Discussion Board Section (Only Visible When Logged In) -->
+        <div id="discussion-board" style="display: none;">
+
+            <h3>Discussion Board</h3>
+
+            <!-- Messages will be loaded here -->
+            <div id="messages-container" style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #f9f9f9;">
+                <p>Loading messages...</p>
+            </div>
+
+            <!-- Message Input Box (Only for Logged-in Users) -->
+            <div id="post-section" style="display: none; margin-top: 10px;">
+                <textarea id="discussionMessage" placeholder="Share your thoughts on company topics, workflow, or the work environment..." style="width: 100%; height: 80px;"></textarea>
+                <button onclick="postMessage()">Post</button>
+            </div>
+        </div>
+
+
+
     </div>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            checkLoginStatus();
+            loadMessages();
+        });
+
+        function checkLoginStatus() {
+            let userId = sessionStorage.getItem("user_id");
+
+            if (userId) {
+                document.getElementById("business-message").style.display = "none";
+                document.getElementById("discussion-board").style.display = "flex";
+                document.getElementById("post-section").style.display = "block";
+
+
+                document.getElementById("login-btn").style.display = "none";
+                document.getElementById("signup-btn").style.display = "none";
+
+
+                document.getElementById("logout-btn").style.display = "inline-block";
+                document.getElementById("dashboard-btn").style.display = "inline-block";
+            } else {
+                document.getElementById("business-message").style.display = "block";
+                document.getElementById("discussion-board").style.display = "none";
+                document.getElementById("post-section").style.display = "none";
+
+
+                document.getElementById("login-btn").style.display = "inline-block";
+                document.getElementById("signup-btn").style.display = "inline-block";
+
+
+                document.getElementById("logout-btn").style.display = "none";
+                document.getElementById("dashboard-btn").style.display = "none";
+            }
+        }
+
+
+        function loadMessages() {
+            fetch("http://localhost:50287/api/test/discussion")
+                .then(response => response.json())
+                .then(data => {
+                    let container = document.getElementById("messages-container");
+                    container.innerHTML = "";
+
+                    if (data.length === 0) {
+                        container.innerHTML = "<p>No messages yet. Be the first to post!</p>";
+                        return;
+                    }
+
+                    data.forEach(msg => {
+                        let messageBox = document.createElement("div");
+                        messageBox.style = "border-bottom: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #fff;";
+
+                        messageBox.innerHTML = `
+                            <p style="font-size: 20px;"><strong>${msg.user_name}:</strong> ${msg.message}</p>
+                            <p style="font-size: 14px; color: #666;"><i>Posted on: ${msg.created_at}</i></p>
+
+                            <!-- Comments Container -->
+                            <div id="comments-container-${msg.post_id}" style="margin-top: 5px; padding-left: 20px; border-left: 2px solid #ddd;"></div>
+
+                            <button onclick="showCommentBox(${msg.post_id})" style="margin-top: 5px;">💬 Make a comment</button>
+
+                            <!-- Comment Input Box -->
+                            <div id="commentBox-${msg.post_id}" style="display: none; margin-top: 10px;">
+                                <textarea id="commentText-${msg.post_id}" placeholder="Write a comment..." style="width: 100%; height: 50px;"></textarea>
+                                <button onclick="postComment(${msg.post_id})">Post Comment</button>
+                            </div>
+
+
+                        `;
+
+
+
+
+                        container.appendChild(messageBox);
+
+
+                        loadComments(msg.post_id);
+                    });
+                })
+                .catch(error => console.error("❌ Error fetching messages:", error));
+        }
+
+
+        function postMessage() {
+            let message = document.getElementById("discussionMessage").value.trim();
+            let userId = parseInt(sessionStorage.getItem("user_id"), 10);
+
+            if (!userId || isNaN(userId)) {
+                alert("❌ Error: You must be logged in to post.");
+                return;
+            }
+            if (!message) {
+                alert("❌ Please enter a message.");
+                return;
+            }
+
+            fetch("http://localhost:50287/api/test/discussion", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ UserId: userId, Message: message })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        document.getElementById("discussionMessage").value = "";
+                        loadMessages();
+
+
+                        setTimeout(() => {
+                            document.querySelectorAll("[id^='comments-container-']").forEach(container => {
+                                let postId = container.id.split('-')[2];
+                                loadComments(postId);
+                            });
+                        }, 500);
+                    } else {
+                        alert("❌ Error posting message: " + data.message);
+                    }
+                })
+                .catch(error => console.error("❌ Error posting message:", error));
+        }
+
+
+
+
+        function logout() {
+            sessionStorage.clear();
+            checkLoginStatus();
+        }
+
+        function showCommentBox(postId) {
+            let commentBox = document.getElementById(`commentBox-${postId}`);
+            commentBox.style.display = commentBox.style.display === "none" ? "block" : "none";
+        }
+
+        function postComment(postId) {
+            let commentText = document.getElementById(`commentText-${postId}`).value.trim();
+            let userId = parseInt(sessionStorage.getItem("user_id"), 10);
+
+            if (!userId || isNaN(userId)) {
+                alert("❌ You must be logged in to comment.");
+                return;
+            }
+            if (!commentText) {
+                alert("❌ Please enter a comment.");
+                return;
+            }
+
+            fetch("http://localhost:50287/api/test/discussion/comment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ PostId: postId, UserId: userId, CommentText: commentText })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    document.getElementById(`commentText-${postId}`).value = "";
+
+
+                    loadComments(postId);
+                })
+                .catch(error => console.error("❌ Error posting comment:", error));
+        }
+
+
+
+        function loadComments(postId) {
+            fetch(`http://localhost:50287/api/test/discussion/comments/${postId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let container = document.getElementById(`comments-container-${postId}`);
+                    container.innerHTML = "";
+
+                    if (data.length === 0) {
+                        container.innerHTML = "<p style='color: #888;'>No comments yet. Be the first to comment!</p>";
+                        return;
+                    }
+
+                    data.forEach(comment => {
+                        let commentBox = document.createElement("div");
+                        commentBox.style = "background: #f8f8f8; padding: 5px; margin-top: 5px; border-radius: 5px;";
+                        commentBox.innerHTML = `
+                <p><strong>${comment.user_name}:</strong> ${comment.comment_text}</p>
+                <p style="font-size: 10px; color: #666;"><i>Commented on: ${comment.created_at}</i></p>
+            `;
+                        container.appendChild(commentBox);
+                    });
+                })
+                .catch(error => console.error("❌ Error fetching comments:", error));
+        }
+
+
+
+    </script>
 
 </body>
 </html>
