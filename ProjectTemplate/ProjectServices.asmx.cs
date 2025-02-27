@@ -153,7 +153,7 @@ namespace ProjectTemplate
         }
 
         [WebMethod(EnableSession = true)]
-        public string EditAccount(string newPassword, string newPreferredName)
+        public string EditAccount(string newPassword, string newPreferredEmail, string newFirstName, string newLastName)
         {
             // Ensure the user is logged in
             if (Session["user_id"] == null)
@@ -161,7 +161,7 @@ namespace ProjectTemplate
                 return "Error: User not logged in.";
             }
 
-            if (string.IsNullOrEmpty(newPassword) && string.IsNullOrEmpty(newPreferredName))
+            if (string.IsNullOrEmpty(newPassword) && string.IsNullOrEmpty(newPreferredEmail) && string.IsNullOrEmpty(newFirstName) && string.IsNullOrEmpty(newLastName))
             {
                 return "No changes detected. Please update at least one field.";
             }
@@ -175,9 +175,17 @@ namespace ProjectTemplate
             {
                 updates.Add("password = @NewPassword");
             }
-            if (!string.IsNullOrEmpty(newPreferredName))
+            if (!string.IsNullOrEmpty(newPreferredEmail))
             {
-                updates.Add("preferred_name = @NewPreferredName");
+                updates.Add("preferred_email = @newPreferredEmail");
+            }
+            if (!string.IsNullOrEmpty(newFirstName))
+            {
+                updates.Add("preferred_firstName = @newFirstName");
+            }
+            if (!string.IsNullOrEmpty(newLastName))
+            {
+                updates.Add("preferred_lastName = @newLastName");
             }
 
             string sqlUpdate = "UPDATE users SET " + string.Join(", ", updates) + " WHERE user_id = @UserId";
@@ -191,9 +199,17 @@ namespace ProjectTemplate
                     {
                         sqlCommand.Parameters.AddWithValue("@NewPassword", newPassword);
                     }
-                    if (!string.IsNullOrEmpty(newPreferredName))
+                    if (!string.IsNullOrEmpty(newPreferredEmail))
                     {
-                        sqlCommand.Parameters.AddWithValue("@NewPreferredName", newPreferredName);
+                        sqlCommand.Parameters.AddWithValue("@newPreferredEmail", newPreferredEmail);
+                    }
+                    if (!string.IsNullOrEmpty(newFirstName))
+                    {
+                        sqlCommand.Parameters.AddWithValue("@newFirstName", newFirstName);
+                    }
+                    if (!string.IsNullOrEmpty(newLastName))
+                    {
+                        sqlCommand.Parameters.AddWithValue("@newLastName", newLastName);
                     }
                     sqlCommand.Parameters.AddWithValue("@UserId", userId);
 
