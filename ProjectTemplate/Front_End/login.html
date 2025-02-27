@@ -6,6 +6,7 @@
     <title>Login</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
+<<<<<<< HEAD
     <script>
         function loginUser(event) {
             event.preventDefault(); // Prevent form from submitting traditionally
@@ -36,6 +37,35 @@
                     console.error("Login error:", error);
                 });
         }
+=======
+    <script type="text/javascript">
+
+    function Login() {
+	    var email = $("#email").val();
+	    var password = $("#password").val();
+       
+
+	    var webMethod = "ProjectServices.asmx/Login";
+	    var parameters = "(\"email\":\"" + encodeURI(email) + "\", \"password\":\"" + encodeURI(password)+"\"} ";
+
+	    $.ajax({
+		    type: "POST",
+		    url: webMethod,
+		    data: parameters,
+		    contentType: "application/json; charset=utf-8",
+		    dataType: "json",
+		    success: function (msg) {
+			    var responseFromServer = msg.d;
+                if (responseFromServer.includes("success")) {
+                    window.location.href = "dashboard.html"; // Redirect if login is successful
+                }
+		    }, 
+		    error: function (e) {
+			    alert("Error: Incorrect email or password");
+		    }
+	    });
+}
+>>>>>>> refs/remotes/origin/connection
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Futura:wght@400&display=swap');
@@ -143,10 +173,17 @@
     <!-- Login Form -->
     <div class="container">
         <h1>Login</h1>
+<<<<<<< HEAD
         <form onsubmit="loginUser(event)">
             <input type="email" id="email" placeholder="Email" required>
             <input type="password" id="password" placeholder="Password" required>
             <button type="submit" class="login-btn">Login</button>
+=======
+        <form method="get">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit" class="login-btn" id="login-btn" onclick="Login()">Login</button>
+>>>>>>> refs/remotes/origin/connection
         </form>
         <a href="homepage.html" class="back-btn">Back to Home</a>
 
