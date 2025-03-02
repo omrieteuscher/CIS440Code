@@ -331,7 +331,7 @@
     <!-- Dashboard Grid -->
     <div class="dashboard-grid">
         <div class="grid-box">
-            <div class="grid-title">Already Responded</div>
+            <div class="grid-title">Sent Feedback</div>
             <div class="grid-content">
                 <div class="inner-box">Feedback 1</div>
                 <div class="inner-box">Feedback 2</div>
@@ -341,7 +341,7 @@
             </div>
         </div>
         <div class="grid-box">
-            <div class="grid-title">Not Responded To Yet</div>
+            <div class="grid-title">Feedback Responses</div>
             <div class="grid-content">
                 <div class="inner-box">Feedback 1</div>
                 <div class="inner-box">Feedback 2</div>
@@ -351,7 +351,7 @@
             </div>
         </div>
         <div class="grid-box">
-            <div class="grid-title">Notifications</div>
+            <div class="grid-title">Recommended Implementation of Feedback</div>
             <div class="grid-content">
                 <div class="inner-box">Notification 1</div>
                 <div class="inner-box">Notification 2</div>
@@ -431,7 +431,7 @@
                         } else if (feedback.sender_id == loggedInUserId) {
                             // If user is the sender, show the response
                             feedbackBox.innerHTML = `
-                                <p><strong>To:</strong> ${feedback.receiver_name}</p>
+                                <p><strong>From:</strong> ${feedback.receiver_name}</p>
                                 <p>${feedback.message}</p>
                                 <p><strong>Status:</strong> ${feedback.status}</p>
                                 <p><strong>Response:</strong> ${feedback.response}</p>
@@ -447,27 +447,6 @@
         document.addEventListener("DOMContentLoaded", function () {
             loadFeedback();
         });
-
-        // Fetch Notifications
-        function loadNotifications() {
-            fetch("http://localhost:50287/api/test/notifications") // Adjust API endpoint if needed
-                .then(response => response.json())
-                .then(data => {
-                    console.log("✅ Notifications Data:", data);
-
-                    let notificationsContainer = document.querySelector(".dashboard-grid .grid-box:nth-child(3) .grid-content");
-                    notificationsContainer.innerHTML = ""; // Clear existing content
-
-                    data.forEach(notification => {
-                        let notificationBox = document.createElement("div");
-                        notificationBox.classList.add("inner-box");
-                        notificationBox.innerText = `${notification.message}`;
-                        notificationsContainer.appendChild(notificationBox);
-                    });
-                })
-                .catch(error => console.error("❌ Error fetching notifications:", error));
-        }
-
         // Load data when the page is loaded
         document.addEventListener("DOMContentLoaded", function () {
             loadFeedback();
@@ -587,13 +566,13 @@
                         let feedbackBox = document.createElement("div");
                         feedbackBox.classList.add("inner-box");
                         feedbackBox.innerHTML = `
-                            <p><strong>From:</strong> ${feedback.sender_name}</p>
+                            <p><strong>To:</strong> ${feedback.receiver_name}</p>
                             <p>${feedback.message}</p>
                             <p><strong>Status:</strong> ${feedback.status}</p>
                             ${feedback.status === "Pending" ? `
                                 <textarea id="response_${feedback.feedback_id}" placeholder="Write a response..."></textarea>
                                 <button onclick="submitResponse(${feedback.feedback_id})">Submit Response</button>
-                            ` : `<p><strong>Response:</strong> ${feedback.response || "No response given."}</p>`}
+                            ` : `<p> ${feedback.response || "No response given."}</p>`}
                         `;
 
                         if (feedback.status === "Responded") {
